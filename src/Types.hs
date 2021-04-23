@@ -1,9 +1,10 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Types where
 
-import Data.Aeson (FromJSON (..))
+import Data.Aeson (FromJSON (..), (.:))
 import qualified Data.Aeson as JSON
 import RIO
 import RIO.Process
@@ -37,6 +38,49 @@ instance HasLogFunc App where
 
 instance HasProcessContext App where
   processContextL = lens appProcessContext (\x y -> x {appProcessContext = y})
+
+data ArchiveSpecification = ArchiveSpecification
+  { archiveSpecificationTarball :: Text,
+    archiveSpecificationShasum :: Text,
+    archiveSpecificationSize :: Int
+  }
+  deriving (Eq, Show)
+
+instance FromJSON ArchiveSpecification where
+  parseJSON = JSON.withObject "ArchiveSpecification" $ \o -> do
+    tarball <- o .: "tarball"
+    shasum <- o .: "shasum"
+    maybeSize <- readMaybe <$> o .: "size"
+    case maybeSize of
+      Just size ->
+        pure $
+          ArchiveSpecification
+            { archiveSpecificationTarball = tarball,
+              archiveSpecificationShasum = shasum,
+              archiveSpecificationSize = size
+            }
+      Nothing ->
+        fail "Size is not readable as integer"
+
+data Versions = Versions
+  { versionsMaster :: Master
+  }
+  deriving (Eq, Show, Generic)
+
+instance FromJSON Versions where
+  parseJSON = JSON.genericParseJSON $ parseJSONOptions "versions"
+
+data Master = Master
+  { masterVersion :: Text,
+    masterDate :: Text,
+    masterDocs :: Text,
+    masterStdDocs :: Text,
+    masterSrc :: ArchiveSpecification
+  }
+  deriving (Eq, Show, Generic)
+
+instance FromJSON Master where
+  parseJSON = JSON.genericParseJSON $ parseJSONOptions "master"
 
 removePrefix :: String -> String -> String
 removePrefix prefix string =

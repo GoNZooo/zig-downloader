@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a43a417171387e833808c58a7d47001303b3d3bc343ad7d0d52ada2d6dc8e0cf
+-- hash: 67e29ec2cd598a8f5e41449fea8d62e793290dbba1fb647c25ec762d2e18806d
 
 name:           zig-downloader
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       Run
       Types
       Util
+      ZigIndex
   other-modules:
       Paths_zig_downloader
   hs-source-dirs:
@@ -39,6 +40,8 @@ library
   build-depends:
       aeson
     , base >=4.11 && <10
+    , http-client
+    , http-client-tls
     , inflections
     , rio >=0.1.12.0
   default-language: Haskell2010
@@ -54,6 +57,8 @@ executable zig-downloader-exe
       aeson
     , base >=4.11 && <10
     , directory
+    , http-client
+    , http-client-tls
     , inflections
     , optparse-simple
     , rio >=0.1.12.0
@@ -74,6 +79,8 @@ test-suite zig-downloader-test
       aeson
     , base >=4.11 && <10
     , hspec
+    , http-client
+    , http-client-tls
     , inflections
     , rio >=0.1.12.0
     , zig-downloader

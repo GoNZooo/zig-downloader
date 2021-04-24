@@ -40,7 +40,6 @@ main = do
             )
       )
       empty
-  print options
   lo <- logOptionsHandle stderr (options & optionsSettings & settingsVerbose)
   pc <- mkDefaultProcessContext
   withLogFunc lo $ \lf ->
@@ -50,7 +49,7 @@ main = do
               appProcessContext = pc,
               appOptions = options
             }
-     in runRIO app run
+     in runRIO app (run $ optionsCommand options)
 
 parseSettings :: Text -> Parser Settings
 parseSettings defaultDownloadPath =

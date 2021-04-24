@@ -106,19 +106,19 @@ instance FromJSON Versions where
 
 data Version = Version
   { versionMetadata :: VersionMetadata,
-    versionVersions :: HashMap Text ArchiveSpecification
+    versionArchitectures :: HashMap Text ArchiveSpecification
   }
   deriving (Eq, Show)
 
 instance FromJSON Version where
   parseJSON value = do
     metadata <- JSON.parseJSON value
-    versions <- parseVersions value
+    architectures <- parseArchitectures value
 
-    pure $ Version {versionMetadata = metadata, versionVersions = versions}
+    pure $ Version {versionMetadata = metadata, versionArchitectures = architectures}
 
-parseVersions :: JSON.Value -> Parser (HashMap Text ArchiveSpecification)
-parseVersions = JSON.withObject "Versions" $ \o -> do
+parseArchitectures :: JSON.Value -> Parser (HashMap Text ArchiveSpecification)
+parseArchitectures = JSON.withObject "Architectures" $ \o -> do
   let objectWithoutMetadata =
         Utilities.deleteAllKeys ["version", "date", "docs", "stdDocs", "src"] o
       versions =

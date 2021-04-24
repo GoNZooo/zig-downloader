@@ -84,6 +84,7 @@ instance FromJSON ArchiveSpecification where
 
 data Versions = Versions
   { versionsMaster :: Version,
+    -- @TODO: parse version names according to semantic versioning so they can be sorted properly
     versionsTags :: HashMap Text Version
   }
   deriving (Eq, Show, Generic)

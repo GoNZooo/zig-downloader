@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -18,11 +19,22 @@ import qualified Utilities
 
 -- | Command line arguments
 data Options = Options
-  { optionsVerbose :: !Bool,
-    optionsDownloadPath :: !Text,
-    optionsDownloadMaster :: !Bool
+  { optionsSettings :: !Settings,
+    optionsCommand :: !Command
   }
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
+
+data Command
+  = ShowCommand Text
+  | ListCommand
+  deriving (Eq, Show, Generic, FromJSON)
+
+data Settings = Settings
+  { settingsVerbose :: !Bool,
+    settingsDownloadPath :: !Text,
+    settingsDownloadMaster :: !Bool
+  }
+  deriving (Eq, Show, Generic)
 
 parseJSONOptions :: String -> JSON.Options
 parseJSONOptions prefix =
@@ -30,6 +42,9 @@ parseJSONOptions prefix =
 
 instance FromJSON Options where
   parseJSON = JSON.genericParseJSON $ parseJSONOptions "options"
+
+instance FromJSON Settings where
+  parseJSON = JSON.genericParseJSON $ parseJSONOptions "settings"
 
 data App = App
   { appLogFunc :: !LogFunc,

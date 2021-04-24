@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -17,7 +19,7 @@ main = do
   yamlConfigurationPath <- getXdgDirectory XdgConfig "zig-downloader/config.yaml"
   maybeYamlOptions <- decodeFileEither yamlConfigurationPath
   let defaultDownloadPath = case maybeYamlOptions of
-        Right Options {optionsDownloadPath = path} -> path
+        Right Settings {settingsDownloadPath = path} -> path
         Left errorString -> impureThrow errorString
 
   (options, ()) <-
@@ -26,27 +28,20 @@ main = do
       "zig-downloader"
       "Downloader for Zig pre-built binaries"
       ( Options
-          <$> switch
-            ( long "verbose"
-                <> short 'v'
-                <> help "Verbose output?"
-            )
-          <*> option
-            str
-            ( long "path"
-                <> short 'p'
-                <> help "Path to download archives to"
-                <> value defaultDownloadPath
-            )
-          <*> switch
-            ( long "master"
-                <> short 'm'
-                <> help "Whether or not to download master version"
+          <$> parseSettings defaultDownloadPath
+          <*> subparser
+            ( command
+                "show"
+                ( info
+                    parseShowCommand
+                    (progDesc "Show a version, or master if no argument is given")
+                )
+                <> command "list" (info (pure ListCommand) (progDesc "List all versions"))
             )
       )
       empty
   print options
-  lo <- logOptionsHandle stderr (optionsVerbose options)
+  lo <- logOptionsHandle stderr (options & optionsSettings & settingsVerbose)
   pc <- mkDefaultProcessContext
   withLogFunc lo $ \lf ->
     let app =
@@ -56,3 +51,27 @@ main = do
               appOptions = options
             }
      in runRIO app run
+
+parseSettings :: Text -> Parser Settings
+parseSettings defaultDownloadPath =
+  Settings
+    <$> switch
+      ( long "verbose"
+          <> short 'v'
+          <> help "Verbose output?"
+      )
+    <*> option
+      str
+      ( long "path"
+          <> short 'p'
+          <> help "Path to download archives to"
+          <> value defaultDownloadPath
+      )
+    <*> switch
+      ( long "master"
+          <> short 'm'
+          <> help "Whether or not to download master version"
+      )
+
+parseShowCommand :: Parser Command
+parseShowCommand = ShowCommand <$> argument str (metavar "VERSION")

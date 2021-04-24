@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Types where
@@ -7,6 +8,7 @@ module Types where
 import Data.Aeson (FromJSON (..), (.:))
 import qualified Data.Aeson as JSON
 import RIO
+import qualified RIO.HashMap as Map
 import RIO.Process
 import qualified RIO.Text as Text
 import qualified RIO.Text.Partial as PartialText
@@ -63,24 +65,38 @@ instance FromJSON ArchiveSpecification where
         fail "Size is not readable as integer"
 
 data Versions = Versions
-  { versionsMaster :: Master
+  { versionsMaster :: Version,
+    versionsTags :: HashMap Text Version
   }
   deriving (Eq, Show, Generic)
 
 instance FromJSON Versions where
-  parseJSON = JSON.genericParseJSON $ parseJSONOptions "versions"
+  parseJSON = JSON.withObject "Versions" $ \o -> do
+    master <- o .: "master"
+    let initialMap = Map.empty
+        mapWithoutMaster = Map.delete "master" o
+        tags =
+          Map.foldrWithKey
+            ( \k v m -> case JSON.fromJSON v of
+                JSON.Success archiveSpecification -> Map.insert k archiveSpecification m
+                JSON.Error _e -> m
+            )
+            initialMap
+            mapWithoutMaster
 
-data Master = Master
-  { masterVersion :: Text,
-    masterDate :: Text,
-    masterDocs :: Text,
-    masterStdDocs :: Text,
-    masterSrc :: ArchiveSpecification
+    pure $ Versions {versionsMaster = master, versionsTags = tags}
+
+data Version = Version
+  { versionVersion :: Maybe Text,
+    versionDate :: Text,
+    versionDocs :: Text,
+    versionStdDocs :: Maybe Text,
+    versionSrc :: ArchiveSpecification
   }
   deriving (Eq, Show, Generic)
 
-instance FromJSON Master where
-  parseJSON = JSON.genericParseJSON $ parseJSONOptions "master"
+instance FromJSON Version where
+  parseJSON = JSON.genericParseJSON $ parseJSONOptions "version"
 
 removePrefix :: String -> String -> String
 removePrefix prefix string =

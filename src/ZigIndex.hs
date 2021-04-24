@@ -11,11 +11,14 @@ import Types
 indexUrl :: String
 indexUrl = "https://ziglang.org/download/index.json"
 
-getMaster :: IO (Either String Master)
-getMaster = do
+getVersions :: IO (Either String Versions)
+getVersions = do
   manager <- newTlsManager
   request <- parseRequest indexUrl
   response <- httpLbs request manager
   let body = responseBody response
 
-  pure $ versionsMaster <$> JSON.eitherDecode' body
+  pure $ JSON.eitherDecode' body
+
+getMaster :: IO (Either String Version)
+getMaster = fmap versionsMaster <$> getVersions

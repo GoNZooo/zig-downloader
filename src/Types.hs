@@ -27,6 +27,7 @@ data Options = Options
 data Command
   = ShowCommand Text
   | ListCommand
+  | DownloadCommand Text
   deriving (Eq, Show, Generic, FromJSON)
 
 data Settings = Settings

@@ -4,9 +4,14 @@
 module Run (run) where
 
 import Import
+import Network.HTTP.Client
+import Network.HTTP.Client.TLS
+import qualified RIO.Directory as Directory
 import qualified RIO.HashMap as Map
 import qualified RIO.List as List
+import qualified RIO.List.Partial as Partial
 import qualified RIO.Text as Text
+import System.FilePath ((</>))
 import System.IO (putStrLn)
 import Utilities (descending)
 import ZigIndex
@@ -46,6 +51,28 @@ run (ShowCommand versionName) = do
           liftIO $ forM_ tagNames (putStrLn . Text.unpack)
     Left e ->
       logError $ "Unable to get versions: " <> fromString e
+run (DownloadCommand "master") = do
+  downloadPath <- asks (settingsDownloadPath . optionsSettings . appOptions)
+  maybeMaster <- liftIO getMaster
+  case maybeMaster of
+    Right master@Version {versionMetadata = meta} -> do
+      let versionName = fromMaybe "master" $ versionMetadataVersion meta
+      liftIO $ downloadVersion downloadPath versionName master
+    Left e ->
+      logError $ "Unable to get versions: " <> fromString e
+run (DownloadCommand versionName) = do
+  downloadPath <- asks (settingsDownloadPath . optionsSettings . appOptions)
+  maybeVersions <- liftIO getVersions
+  case maybeVersions of
+    Right Versions {versionsTags = tags} -> do
+      case Map.lookup versionName tags of
+        Just version -> liftIO $ downloadVersion downloadPath versionName version
+        Nothing -> do
+          let tagNames = tags & Map.keys & List.sortBy descending
+          liftIO $ putStrLn "Unable to find version, available versions are:"
+          liftIO $ forM_ tagNames (putStrLn . Text.unpack)
+    Left e ->
+      logError $ "Unable to get versions: " <> fromString e
 
 showVersion :: Text -> Version -> IO ()
 showVersion
@@ -79,3 +106,41 @@ showVersion
            }
          ) ->
           putStrLn $ Text.unpack $ mconcat [architectureName, ": ", tarball, " (", tshow size, " b)"]
+
+downloadVersion :: Text -> Text -> Version -> IO ()
+downloadVersion
+  downloadPath
+  versionName
+  Version
+    { versionMetadata = VersionMetadata {versionMetadataVersion = maybeVersion},
+      versionArchitectures = architectures
+    } = do
+    let versionName' = maybe (Text.unpack versionName) Text.unpack maybeVersion
+        downloadPath' = Text.unpack downloadPath
+        versionPath = downloadPath' </> versionName'
+    architectures & Map.toList & traverse_ (downloadArchitecture versionPath)
+
+createIfNotExists :: FilePath -> IO ()
+createIfNotExists = Directory.createDirectoryIfMissing True
+
+downloadArchitecture :: FilePath -> (Text, ArchiveSpecification) -> IO ()
+downloadArchitecture
+  versionPath
+  (architectureName, ArchiveSpecification {archiveSpecificationTarball = tarball}) = do
+    let architecturePath = versionPath </> Text.unpack architectureName
+        tarballUrl = Text.unpack tarball
+        tarballFilename = case tarball & Text.split (== '/') of
+          [] -> error "Tarball URL is blank"
+          other -> Partial.last other & Text.unpack
+        tarballPath = architecturePath </> tarballFilename
+    createIfNotExists architecturePath
+    doesTarballExist <- Directory.doesFileExist tarballPath
+    if not doesTarballExist
+      then do
+        putStrLn $ "Downloading: " <> tarballUrl
+        manager <- newTlsManager
+        request <- parseRequest tarballUrl
+        response <- httpLbs request manager
+        let body = responseBody response
+        writeFileBinary tarballPath $ toStrictBytes body
+      else pure ()

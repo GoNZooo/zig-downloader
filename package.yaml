@@ -26,6 +26,7 @@ dependencies:
 - inflections
 - http-client
 - http-client-tls
+- filepath
 
 ghc-options:
 - -Wall

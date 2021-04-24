@@ -37,6 +37,7 @@ main = do
                     (progDesc "Show a version, or master if no argument is given")
                 )
                 <> command "list" (info (pure ListCommand) (progDesc "List all versions"))
+                <> command "download" (info parseDownloadCommand (progDesc "Download a given version"))
             )
       )
       empty
@@ -74,3 +75,6 @@ parseSettings defaultDownloadPath =
 
 parseShowCommand :: Parser Command
 parseShowCommand = ShowCommand <$> argument str (metavar "VERSION")
+
+parseDownloadCommand :: Parser Command
+parseDownloadCommand = DownloadCommand <$> argument str (metavar "VERSION")

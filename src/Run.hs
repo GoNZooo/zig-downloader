@@ -41,7 +41,7 @@ run (ShowCommand versionName) = do
       case Map.lookup versionName tags of
         Just version -> liftIO $ showVersion versionName version
         Nothing -> do
-          let tagNames = Map.keys tags
+          let tagNames = tags & Map.keys & List.sortBy descending
           liftIO $ putStrLn "Unable to find version, available versions are:"
           liftIO $ forM_ tagNames (putStrLn . Text.unpack)
     Left e ->

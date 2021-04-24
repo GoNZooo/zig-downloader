@@ -38,6 +38,11 @@ main = do
                 <> help "Path to download archives to"
                 <> value defaultDownloadPath
             )
+          <*> switch
+            ( long "master"
+                <> short 'm'
+                <> help "Whether or not to download master version"
+            )
       )
       empty
   print options

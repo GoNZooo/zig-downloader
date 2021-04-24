@@ -17,7 +17,8 @@ import Text.Inflections
 -- | Command line arguments
 data Options = Options
   { optionsVerbose :: !Bool,
-    optionsDownloadPath :: !Text
+    optionsDownloadPath :: !Text,
+    optionsDownloadMaster :: !Bool
   }
   deriving (Show, Generic)
 

@@ -12,7 +12,6 @@ import qualified Paths_zig_downloader
 import RIO.Process
 import Run
 import System.Directory
-import System.IO (print)
 
 main :: IO ()
 main = do

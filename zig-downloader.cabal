@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 67e29ec2cd598a8f5e41449fea8d62e793290dbba1fb647c25ec762d2e18806d
+-- hash: f5cc6bcf0b138488b12d4d63fb95452757dc5578d43ef5e49e74bc0a4bac97f2
 
 name:           zig-downloader
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       Run
       Types
       Util
+      Utilities
       ZigIndex
   other-modules:
       Paths_zig_downloader

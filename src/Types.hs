@@ -14,6 +14,7 @@ import RIO.Process
 import qualified RIO.Text as Text
 import qualified RIO.Text.Partial as PartialText
 import Text.Inflections
+import qualified Utilities
 
 -- | Command line arguments
 data Options = Options
@@ -103,7 +104,8 @@ instance FromJSON Version where
 
 parseVersions :: JSON.Value -> Parser (HashMap Text ArchiveSpecification)
 parseVersions = JSON.withObject "Versions" $ \o -> do
-  let objectWithoutMetadata = deleteAllKeys ["version", "date", "docs", "stdDocs", "src"] o
+  let objectWithoutMetadata =
+        Utilities.deleteAllKeys ["version", "date", "docs", "stdDocs", "src"] o
       versions =
         Map.foldrWithKey
           ( \k v m -> case JSON.fromJSON v of
@@ -137,6 +139,3 @@ removePrefix prefix string =
             Left err -> throwM err
         [rest] -> Text.unpack rest
         _otherwise -> error "Invalid prefix used"
-
-deleteAllKeys :: [Text] -> HashMap Text a -> HashMap Text a
-deleteAllKeys keys = Map.filterWithKey (\k _v -> k `notElem` keys)

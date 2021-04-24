@@ -7,6 +7,7 @@ module Types where
 
 import Data.Aeson (FromJSON (..), (.:))
 import qualified Data.Aeson as JSON
+import Data.Aeson.Types (Parser)
 import RIO
 import qualified RIO.HashMap as Map
 import RIO.Process
@@ -88,16 +89,43 @@ instance FromJSON Versions where
     pure $ Versions {versionsMaster = master, versionsTags = tags}
 
 data Version = Version
-  { versionVersion :: Maybe Text,
-    versionDate :: Text,
-    versionDocs :: Text,
-    versionStdDocs :: Maybe Text,
-    versionSrc :: ArchiveSpecification
+  { versionMetadata :: VersionMetadata,
+    versionVersions :: HashMap Text ArchiveSpecification
+  }
+  deriving (Eq, Show)
+
+instance FromJSON Version where
+  parseJSON value = do
+    metadata <- JSON.parseJSON value
+    versions <- parseVersions value
+
+    pure $ Version {versionMetadata = metadata, versionVersions = versions}
+
+parseVersions :: JSON.Value -> Parser (HashMap Text ArchiveSpecification)
+parseVersions = JSON.withObject "Versions" $ \o -> do
+  let objectWithoutMetadata = deleteAllKeys ["version", "date", "docs", "stdDocs", "src"] o
+      versions =
+        Map.foldrWithKey
+          ( \k v m -> case JSON.fromJSON v of
+              JSON.Success archiveSpecification -> Map.insert k archiveSpecification m
+              JSON.Error _e -> m
+          )
+          Map.empty
+          objectWithoutMetadata
+
+  pure versions
+
+data VersionMetadata = VersionMetadata
+  { versionMetadataVersion :: Maybe Text,
+    versionMetadataDate :: Text,
+    versionMetadataDocs :: Text,
+    versionMetadataStdDocs :: Maybe Text,
+    versionMetadataSrc :: ArchiveSpecification
   }
   deriving (Eq, Show, Generic)
 
-instance FromJSON Version where
-  parseJSON = JSON.genericParseJSON $ parseJSONOptions "version"
+instance FromJSON VersionMetadata where
+  parseJSON = JSON.genericParseJSON $ parseJSONOptions "versionMetadata"
 
 removePrefix :: String -> String -> String
 removePrefix prefix string =
@@ -109,3 +137,6 @@ removePrefix prefix string =
             Left err -> throwM err
         [rest] -> Text.unpack rest
         _otherwise -> error "Invalid prefix used"
+
+deleteAllKeys :: [Text] -> HashMap Text a -> HashMap Text a
+deleteAllKeys keys = Map.filterWithKey (\k _v -> k `notElem` keys)

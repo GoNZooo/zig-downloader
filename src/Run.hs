@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Run (run) where
@@ -6,6 +7,7 @@ module Run (run) where
 import Import
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
+import Numeric
 import qualified RIO.Directory as Directory
 import qualified RIO.HashMap as Map
 import qualified RIO.List as List
@@ -98,14 +100,20 @@ showVersion
     putStrLn "\nArchitectures"
     putStrLn "-------------"
 
-    forM_ (Map.toList architectures) $
-      \( architectureName,
-         ArchiveSpecification
-           { archiveSpecificationTarball = tarball,
-             archiveSpecificationSize = size
-           }
-         ) ->
-          putStrLn $ Text.unpack $ mconcat [architectureName, ": ", tarball, " (", tshow size, " b)"]
+    forM_ (Map.toList architectures) printArchitecture
+
+printArchitecture :: (Text, ArchiveSpecification) -> IO ()
+printArchitecture
+  ( architectureName,
+    ArchiveSpecification
+      { archiveSpecificationTarball = tarball,
+        archiveSpecificationSize = size
+      }
+    ) =
+    let megaBytesString = showFFloat @Float (Just 2) (fromIntegral size / 1000000.0) ""
+        architecture' = Text.unpack architectureName
+        tarball' = Text.unpack tarball
+     in putStrLn $ mconcat [architecture', ": ", tarball', " (", megaBytesString, " MB)"]
 
 downloadVersion :: Text -> Text -> Version -> IO ()
 downloadVersion

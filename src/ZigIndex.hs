@@ -1,11 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module ZigIndex where
 
 import qualified Data.Aeson as JSON
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS
+import RIO
 import Types
 
 indexUrl :: String

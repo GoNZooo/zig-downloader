@@ -27,9 +27,11 @@ run ListCommand = do
         } ->
         do
           let tagKeys = tags & Map.keys & List.sortBy descending
+
           unless quietMode $ do
             liftIO $ putStr $ "Master version: " <> maybe "N/A" Text.unpack masterVersion
           liftIO $ putStrLn $ maybe "N/A" Text.unpack masterVersion
+
           unless quietMode $ do
             liftIO $ putStrLn "Other versions:"
           liftIO $ forM_ tagKeys (putStrLn . Text.unpack)
@@ -47,10 +49,7 @@ run (ShowCommand versionName) = do
     Right Versions {versionsTags = tags} -> do
       case Map.lookup versionName tags of
         Just version -> liftIO $ showVersion versionName version
-        Nothing -> do
-          let tagNames = tags & Map.keys & List.sortBy descending
-          liftIO $ putStrLn "Unable to find version, available versions are:"
-          liftIO $ forM_ tagNames (putStrLn . Text.unpack)
+        Nothing -> liftIO $ printErrorForUnrecognizedTag tags
     Left e ->
       logError $ "Unable to get versions: " <> fromString e
 run (DownloadCommand "master") = do
@@ -69,10 +68,7 @@ run (DownloadCommand versionName) = do
     Right Versions {versionsTags = tags} -> do
       case Map.lookup versionName tags of
         Just version -> liftIO $ downloadVersion downloadPath versionName version
-        Nothing -> do
-          let tagNames = tags & Map.keys & List.sortBy descending
-          liftIO $ putStrLn "Unable to find version, available versions are:"
-          liftIO $ forM_ tagNames (putStrLn . Text.unpack)
+        Nothing -> liftIO $ printErrorForUnrecognizedTag tags
     Left e ->
       logError $ "Unable to get versions: " <> fromString e
 
@@ -152,3 +148,9 @@ downloadArchitecture
         let body = responseBody response
         writeFileBinary tarballPath $ toStrictBytes body
       else pure ()
+
+printErrorForUnrecognizedTag :: HashMap Text Version -> IO ()
+printErrorForUnrecognizedTag tags = do
+  let tagNames = tags & Map.keys & List.sortBy descending
+  liftIO $ putStrLn "Unable to find version, available versions are:"
+  liftIO $ forM_ tagNames (putStrLn . Text.unpack)

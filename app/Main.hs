@@ -32,6 +32,7 @@ main = do
       ( Options
           <$> parseSettings defaultDownloadPath
           <*> subparser (showCommand <> listCommand <> downloadCommand)
+          <*> switch (long "quiet" <> short 'q' <> help "Whether to print less output or not")
       )
       empty
   lo <- logOptionsHandle stderr $ options & optionsSettings & settingsVerbose

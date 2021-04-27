@@ -16,7 +16,8 @@ import qualified Utilities
 -- | Command line arguments
 data Options = Options
   { optionsSettings :: !Settings,
-    optionsCommand :: !Command
+    optionsCommand :: !Command,
+    optionsQuiet :: !Bool
   }
   deriving (Eq, Show, Generic)
 

@@ -10,12 +10,13 @@ import qualified RIO.List as List
 import qualified RIO.List.Partial as Partial
 import qualified RIO.Text as Text
 import System.FilePath ((</>))
-import System.IO (putStrLn)
+import System.IO (putStrLn, putStr)
 import Utilities (descending)
 import ZigIndex
 
 run :: Command -> RIO App ()
 run ListCommand = do
+  quietMode <- asks (optionsQuiet . appOptions)
   maybeVersions <- liftIO getVersions
   case maybeVersions of
     Right
@@ -26,8 +27,11 @@ run ListCommand = do
         } ->
         do
           let tagKeys = tags & Map.keys & List.sortBy descending
-          liftIO $ putStrLn $ "Master version: " <> maybe "N/A" Text.unpack masterVersion
-          liftIO $ putStrLn "Other versions:"
+          unless quietMode $ do
+            liftIO $ putStr $ "Master version: " <> maybe "N/A" Text.unpack masterVersion
+          liftIO $ putStrLn $ maybe "N/A" Text.unpack masterVersion
+          unless quietMode $ do
+            liftIO $ putStrLn "Other versions:"
           liftIO $ forM_ tagKeys (putStrLn . Text.unpack)
     Left e ->
       logError $ "Unable to fetch versions: " <> fromString e

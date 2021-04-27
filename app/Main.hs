@@ -17,6 +17,12 @@ main = do
   let defaultDownloadPath = case maybeYamlOptions of
         Right Settings {settingsDownloadPath = path} -> path
         Left errorString -> impureThrow errorString
+      listCommand = command "list" $ info (pure ListCommand) (progDesc "List all versions")
+      downloadCommand =
+        command "download" (info parseDownloadCommand (progDesc "Download a given version"))
+      showCommand =
+        command "show" $
+          info parseShowCommand (progDesc "Show a version, or master if no argument is given")
 
   (options, ()) <-
     simpleOptions
@@ -25,19 +31,10 @@ main = do
       "Downloader for Zig pre-built binaries"
       ( Options
           <$> parseSettings defaultDownloadPath
-          <*> subparser
-            ( command
-                "show"
-                ( info
-                    parseShowCommand
-                    (progDesc "Show a version, or master if no argument is given")
-                )
-                <> command "list" (info (pure ListCommand) (progDesc "List all versions"))
-                <> command "download" (info parseDownloadCommand (progDesc "Download a given version"))
-            )
+          <*> subparser (showCommand <> listCommand <> downloadCommand)
       )
       empty
-  lo <- logOptionsHandle stderr (options & optionsSettings & settingsVerbose)
+  lo <- logOptionsHandle stderr $ options & optionsSettings & settingsVerbose
   pc <- mkDefaultProcessContext
   withLogFunc lo $ \lf ->
     let app =
@@ -46,7 +43,7 @@ main = do
               appProcessContext = pc,
               appOptions = options
             }
-     in runRIO app (run $ optionsCommand options)
+     in runRIO app $ run $ optionsCommand options
 
 parseSettings :: Text -> Parser Settings
 parseSettings defaultDownloadPath =

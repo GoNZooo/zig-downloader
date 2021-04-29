@@ -36,7 +36,8 @@ data Settings = Settings
 
 parseJSONOptions :: String -> JSON.Options
 parseJSONOptions prefix =
-  JSON.defaultOptions {JSON.fieldLabelModifier = removePrefix prefix}
+  let fieldLabelModifier = removePrefix prefix
+   in JSON.defaultOptions {JSON.fieldLabelModifier}
 
 instance FromJSON Options where
   parseJSON = JSON.genericParseJSON $ parseJSONOptions "options"
@@ -66,16 +67,16 @@ data ArchiveSpecification = ArchiveSpecification
 
 instance FromJSON ArchiveSpecification where
   parseJSON = JSON.withObject "ArchiveSpecification" $ \o -> do
-    tarball <- o .: "tarball"
-    shasum <- o .: "shasum"
+    archiveSpecificationTarball <- o .: "tarball"
+    archiveSpecificationShasum <- o .: "shasum"
     maybeSize <- readMaybe <$> o .: "size"
     case maybeSize of
-      Just size ->
+      Just archiveSpecificationSize ->
         pure $
           ArchiveSpecification
-            { archiveSpecificationTarball = tarball,
-              archiveSpecificationShasum = shasum,
-              archiveSpecificationSize = size
+            { archiveSpecificationTarball,
+              archiveSpecificationShasum,
+              archiveSpecificationSize
             }
       Nothing ->
         fail "Size is not readable as integer"
@@ -89,10 +90,10 @@ data Versions = Versions
 
 instance FromJSON Versions where
   parseJSON = JSON.withObject "Versions" $ \o -> do
-    master <- o .: "master"
+    versionsMaster <- o .: "master"
     let initialMap = Map.empty
         mapWithoutMaster = Map.delete "master" o
-        tags =
+        versionsTags =
           Map.foldrWithKey
             ( \k v m -> case JSON.fromJSON v of
                 JSON.Success archiveSpecification -> Map.insert k archiveSpecification m
@@ -101,7 +102,7 @@ instance FromJSON Versions where
             initialMap
             mapWithoutMaster
 
-    pure $ Versions {versionsMaster = master, versionsTags = tags}
+    pure $ Versions {versionsMaster, versionsTags}
 
 data Version = Version
   { versionMetadata :: VersionMetadata,
@@ -111,10 +112,10 @@ data Version = Version
 
 instance FromJSON Version where
   parseJSON value = do
-    metadata <- JSON.parseJSON value
-    architectures <- parseArchitectures value
+    versionMetadata <- JSON.parseJSON value
+    versionArchitectures <- parseArchitectures value
 
-    pure $ Version {versionMetadata = metadata, versionArchitectures = architectures}
+    pure $ Version {versionMetadata, versionArchitectures}
 
 parseArchitectures :: JSON.Value -> Parser (HashMap Text ArchiveSpecification)
 parseArchitectures = JSON.withObject "Architectures" $ \o -> do

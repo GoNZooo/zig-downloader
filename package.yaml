@@ -38,6 +38,7 @@ ghc-options:
 - -Wredundant-constraints
 
 default-extensions:
+- ApplicativeDo
 - BangPatterns
 - BinaryLiterals
 - ConstraintKinds
@@ -48,8 +49,11 @@ default-extensions:
 - DeriveFunctor
 - DeriveGeneric
 - DeriveTraversable
+- DeriveLift
+- DerivingStrategies
 - DoAndIfThenElse
 - EmptyDataDecls
+- EmptyCase
 - ExistentialQuantification
 - FlexibleContexts
 - FlexibleInstances

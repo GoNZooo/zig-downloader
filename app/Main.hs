@@ -23,7 +23,7 @@ main = do
         command "download" (info parseDownloadCommand (progDesc "Download a given version"))
       showCommand =
         command "show" $
-          info parseShowCommand (progDesc "Show a version, or master if no argument is given")
+          info parseShowCommand (progDesc "Show a version")
 
   (options, ()) <-
     simpleOptions

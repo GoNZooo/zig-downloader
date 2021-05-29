@@ -86,7 +86,7 @@ library:
   source-dirs: src
 
 executables:
-  zig-downloader-exe:
+  zig-downloader:
     main:                Main.hs
     source-dirs:         app
     dependencies:

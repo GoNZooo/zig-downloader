@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d74070bf9f67bb32d7a9f3ba0f38f1646fcf6105d9c055b053620e842ce26092
+-- hash: c7500e60ce2f2e63d9e50271b5e2a6fa4a83254673ec0bda8e68960c0cadc571
 
 name:           zig-downloader
 version:        0.1.0.0
@@ -93,7 +93,7 @@ library
     , split
   default-language: Haskell2010
 
-executable zig-downloader-exe
+executable zig-downloader
   main-is: Main.hs
   other-modules:
       Paths_zig_downloader

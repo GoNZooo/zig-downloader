@@ -27,6 +27,7 @@ dependencies:
 - http-client
 - http-client-tls
 - filepath
+- split
 
 ghc-options:
 - -Wall

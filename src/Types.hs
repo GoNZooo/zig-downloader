@@ -5,6 +5,7 @@ module Types where
 import Data.Aeson (FromJSON (..), (.:))
 import qualified Data.Aeson as JSON
 import Data.Aeson.Types (Parser)
+import Network.HTTP.Client
 import RIO
 import qualified RIO.HashMap as Map
 import RIO.Process
@@ -12,6 +13,10 @@ import qualified RIO.Text as Text
 import qualified RIO.Text.Partial as PartialText
 import Text.Inflections
 import qualified Utilities
+
+newtype Url = Url {unUrl :: String}
+  deriving stock (Eq, Show, Generic)
+  deriving newtype (FromJSON)
 
 -- | Command line arguments
 data Options = Options
@@ -29,7 +34,7 @@ data Command
 
 data Settings = Settings
   { settingsVerbose :: !Bool,
-    settingsDownloadPath :: !Text,
+    settingsDownloadPath :: !FilePath,
     settingsDownloadMaster :: !Bool
   }
   deriving (Eq, Show, Generic)
@@ -48,7 +53,8 @@ instance FromJSON Settings where
 data App = App
   { appLogFunc :: !LogFunc,
     appProcessContext :: !ProcessContext,
-    appOptions :: !Options
+    appOptions :: !Options,
+    appTlsManager :: !Manager
     -- Add other app-specific configuration information here
   }
 
@@ -59,7 +65,7 @@ instance HasProcessContext App where
   processContextL = lens appProcessContext (\x y -> x {appProcessContext = y})
 
 data ArchiveSpecification = ArchiveSpecification
-  { archiveSpecificationTarball :: Text,
+  { archiveSpecificationTarball :: Url,
     archiveSpecificationShasum :: Text,
     archiveSpecificationSize :: Int
   }

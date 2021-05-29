@@ -4,6 +4,7 @@ module Main (main) where
 
 import Data.Yaml (decodeFileEither)
 import Import
+import Network.HTTP.Client.TLS (newTlsManager)
 import Options.Applicative.Simple
 import qualified Paths_zig_downloader
 import RIO.Process
@@ -37,16 +38,18 @@ main = do
       empty
   lo <- logOptionsHandle stderr $ options & optionsSettings & settingsVerbose
   pc <- mkDefaultProcessContext
+  appTlsManager <- newTlsManager
   withLogFunc lo $ \lf ->
     let app =
           App
             { appLogFunc = lf,
               appProcessContext = pc,
-              appOptions = options
+              appOptions = options,
+              appTlsManager
             }
      in runRIO app $ run $ optionsCommand options
 
-parseSettings :: Text -> Parser Settings
+parseSettings :: FilePath -> Parser Settings
 parseSettings defaultDownloadPath =
   Settings
     <$> switch

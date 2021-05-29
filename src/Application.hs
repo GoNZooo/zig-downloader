@@ -68,23 +68,20 @@ showVersionData
       versionArchitectures
     } = do
     quiet <- quietModeOn
-    let outputString =
-          if quiet
-            then maybe "N/A" Text.unpack versionMetadataVersion
-            else
-              unlines
-                [ Text.unpack versionName,
-                  "------",
-                  "Version: " <> maybe "N/A" Text.unpack versionMetadataVersion,
-                  "Date: " <> Text.unpack versionMetadataDate,
-                  "Docs: " <> Text.unpack versionMetadataDocs,
-                  "Standard library docs: " <> maybe "N/A" Text.unpack versionMetadataStdDocs,
-                  "Source: " <> tarballUrl,
-                  "\nArchitectures",
-                  "-------------"
-                ]
-        tarballUrl = versionMetadataSrc & archiveSpecificationTarball & unUrl
-    output outputString
+    if quiet
+      then do
+        forM_ versionMetadataVersion (Text.unpack >>> output)
+      else do
+        let tarballUrl = versionMetadataSrc & archiveSpecificationTarball & unUrl
+        output $ Text.unpack versionName
+        output "------"
+        output $ "Version: " <> maybe "N/A" Text.unpack versionMetadataVersion
+        output $ "Date: " <> Text.unpack versionMetadataDate
+        output $ "Docs: " <> Text.unpack versionMetadataDocs
+        output $ "Standard library docs: " <> maybe "N/A" Text.unpack versionMetadataStdDocs
+        output $ "Source: " <> tarballUrl
+        output "\nArchitectures"
+        output "-------------"
     forM_ (Map.toList versionArchitectures) printArchitecture
 
 printArchitecture :: (Text, ArchiveSpecification) -> RIO App ()

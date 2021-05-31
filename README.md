@@ -65,7 +65,6 @@ Source: https://ziglang.org/download/0.7.1/zig-0.7.1.tar.xz
 
 Architectures
 -------------
-
 riscv64-linux: https://ziglang.org/download/0.7.1/zig-linux-riscv64-0.7.1.tar.xz (37.45 MB)
 x86_64-macos: https://ziglang.org/download/0.7.1/zig-macos-x86_64-0.7.1.tar.xz (36.21 MB)
 x86_64-windows: https://ziglang.org/download/0.7.1/zig-windows-x86_64-0.7.1.zip (54.91 MB)

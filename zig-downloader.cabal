@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c7500e60ce2f2e63d9e50271b5e2a6fa4a83254673ec0bda8e68960c0cadc571
+-- hash: b810b5e019ba9013eeb175dd7fa44b8ad641a6a1276e5678953e13c01661e8ec
 
 name:           zig-downloader
 version:        0.1.0.0
@@ -91,6 +91,7 @@ library
     , inflections
     , rio >=0.1.12.0
     , split
+    , time
   default-language: Haskell2010
 
 executable zig-downloader
@@ -154,6 +155,7 @@ executable zig-downloader
     , optparse-simple
     , rio >=0.1.12.0
     , split
+    , time
     , yaml
     , zig-downloader
   default-language: Haskell2010
@@ -220,5 +222,6 @@ test-suite zig-downloader-test
     , inflections
     , rio >=0.1.12.0
     , split
+    , time
     , zig-downloader
   default-language: Haskell2010

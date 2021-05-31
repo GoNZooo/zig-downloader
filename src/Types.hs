@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Types where
 
 import Data.Aeson (FromJSON (..), (.:))
 import qualified Data.Aeson as JSON
 import Data.Aeson.Types (Parser)
+import Data.Time.Calendar (Day)
 import Network.HTTP.Client
 import RIO
 import qualified RIO.HashMap as Map
@@ -65,41 +67,35 @@ instance HasProcessContext App where
   processContextL = lens appProcessContext (\x y -> x {appProcessContext = y})
 
 data ArchiveSpecification = ArchiveSpecification
-  { archiveSpecificationTarball :: Url,
-    archiveSpecificationShasum :: Text,
-    archiveSpecificationSize :: Int
+  { tarball :: Url,
+    shasum :: Text,
+    size :: Int
   }
   deriving (Eq, Show)
 
 instance FromJSON ArchiveSpecification where
   parseJSON = JSON.withObject "ArchiveSpecification" $ \o -> do
-    archiveSpecificationTarball <- o .: "tarball"
-    archiveSpecificationShasum <- o .: "shasum"
+    tarball <- o .: "tarball"
+    shasum <- o .: "shasum"
     maybeSize <- readMaybe <$> o .: "size"
     case maybeSize of
-      Just archiveSpecificationSize ->
-        pure $
-          ArchiveSpecification
-            { archiveSpecificationTarball,
-              archiveSpecificationShasum,
-              archiveSpecificationSize
-            }
+      Just size -> pure $ ArchiveSpecification {tarball, shasum, size}
       Nothing ->
         fail "Size is not readable as integer"
 
 data Versions = Versions
-  { versionsMaster :: Version,
+  { master :: Master,
     -- @TODO: parse version names according to semantic versioning so they can be sorted properly
-    versionsTags :: HashMap Text Version
+    tags :: HashMap Text NumberedVersion
   }
   deriving (Eq, Show, Generic)
 
 instance FromJSON Versions where
   parseJSON = JSON.withObject "Versions" $ \o -> do
-    versionsMaster <- o .: "master"
+    master <- o .: "master"
     let initialMap = Map.empty
         mapWithoutMaster = Map.delete "master" o
-        versionsTags =
+        tags =
           Map.foldrWithKey
             ( \k v m -> case JSON.fromJSON v of
                 JSON.Success archiveSpecification -> Map.insert k archiveSpecification m
@@ -108,20 +104,51 @@ instance FromJSON Versions where
             initialMap
             mapWithoutMaster
 
-    pure $ Versions {versionsMaster, versionsTags}
+    pure $ Versions {master, tags}
 
-data Version = Version
-  { versionMetadata :: VersionMetadata,
-    versionArchitectures :: HashMap Text ArchiveSpecification
+data Master = Master
+  { metadata :: MasterMetadata,
+    architectures :: HashMap Text ArchiveSpecification
   }
   deriving (Eq, Show)
 
-instance FromJSON Version where
+instance FromJSON Master where
   parseJSON value = do
-    versionMetadata <- JSON.parseJSON value
-    versionArchitectures <- parseArchitectures value
+    metadata <- JSON.parseJSON value
+    architectures <- parseArchitectures value
 
-    pure $ Version {versionMetadata, versionArchitectures}
+    pure $ Master {metadata, architectures}
+
+data NumberedVersion = NumberedVersion
+  { metadata :: NumberedVersionMetadata,
+    architectures :: HashMap Text ArchiveSpecification
+  }
+  deriving (Eq, Show)
+
+instance FromJSON NumberedVersion where
+  parseJSON value = do
+    metadata <- JSON.parseJSON value
+    architectures <- parseArchitectures value
+
+    pure $ NumberedVersion {metadata, architectures}
+
+data MasterMetadata = MasterMetadata
+  { version :: String,
+    date :: Day,
+    docs :: Text,
+    stdDocs :: Text,
+    src :: ArchiveSpecification
+  }
+  deriving (Eq, Show, Generic, FromJSON)
+
+data NumberedVersionMetadata = NumberedVersionMetadata
+  { date :: Day,
+    docs :: Text,
+    notes :: Text,
+    stdDocs :: Maybe Text,
+    src :: ArchiveSpecification
+  }
+  deriving (Eq, Show, Generic, FromJSON)
 
 parseArchitectures :: JSON.Value -> Parser (HashMap Text ArchiveSpecification)
 parseArchitectures = JSON.withObject "Architectures" $ \o -> do

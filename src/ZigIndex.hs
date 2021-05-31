@@ -16,5 +16,5 @@ getVersions = do
 
   pure $ JSON.eitherDecode' $ responseBody response
 
-getMaster :: RIO App (Either String Version)
-getMaster = fmap versionsMaster <$> getVersions
+getMaster :: RIO App (Either String Master)
+getMaster = fmap master <$> getVersions

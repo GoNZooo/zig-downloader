@@ -57,7 +57,6 @@ https://ziglang.org/builds/zig-linux-x86_64-0.8.0-dev.2684+3483931d2.tar.xz
 $ zig-downloader show 0.7.1
 0.7.1
 ------
-Version: N/A
 Date: 2020-12-13
 Docs: https://ziglang.org/documentation/0.7.1/
 Standard library docs: https://ziglang.org/documentation/0.7.1/std/

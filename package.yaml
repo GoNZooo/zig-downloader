@@ -54,6 +54,7 @@ default-extensions:
 - DeriveLift
 - DerivingStrategies
 - DoAndIfThenElse
+- DuplicateRecordFields
 - EmptyDataDecls
 - EmptyCase
 - ExistentialQuantification

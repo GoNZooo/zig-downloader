@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b810b5e019ba9013eeb175dd7fa44b8ad641a6a1276e5678953e13c01661e8ec
+-- hash: 4625a277f3bab2a66baa5e654a8b1eee9cee7ad56f895966860773b74dd94637
 
 name:           zig-downloader
 version:        0.1.0.0
@@ -53,6 +53,7 @@ library
       DeriveLift
       DerivingStrategies
       DoAndIfThenElse
+      DuplicateRecordFields
       EmptyDataDecls
       EmptyCase
       ExistentialQuantification
@@ -115,6 +116,7 @@ executable zig-downloader
       DeriveLift
       DerivingStrategies
       DoAndIfThenElse
+      DuplicateRecordFields
       EmptyDataDecls
       EmptyCase
       ExistentialQuantification
@@ -183,6 +185,7 @@ test-suite zig-downloader-test
       DeriveLift
       DerivingStrategies
       DoAndIfThenElse
+      DuplicateRecordFields
       EmptyDataDecls
       EmptyCase
       ExistentialQuantification

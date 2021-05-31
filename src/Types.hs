@@ -67,9 +67,9 @@ instance HasProcessContext App where
   processContextL = lens appProcessContext (\x y -> x {appProcessContext = y})
 
 data ArchiveSpecification = ArchiveSpecification
-  { tarball :: Url,
-    shasum :: Text,
-    size :: Int
+  { tarball :: !Url,
+    shasum :: !Text,
+    size :: !Int
   }
   deriving (Eq, Show)
 
@@ -84,9 +84,9 @@ instance FromJSON ArchiveSpecification where
         fail "Size is not readable as integer"
 
 data Versions = Versions
-  { master :: Master,
+  { master :: !Master,
     -- @TODO: parse version names according to semantic versioning so they can be sorted properly
-    tags :: HashMap Text NumberedVersion
+    tags :: !(HashMap Text NumberedVersion)
   }
   deriving (Eq, Show, Generic)
 
@@ -107,8 +107,8 @@ instance FromJSON Versions where
     pure $ Versions {master, tags}
 
 data Master = Master
-  { metadata :: MasterMetadata,
-    architectures :: HashMap Text ArchiveSpecification
+  { metadata :: !MasterMetadata,
+    architectures :: !(HashMap Text ArchiveSpecification)
   }
   deriving (Eq, Show)
 
@@ -120,7 +120,7 @@ instance FromJSON Master where
     pure $ Master {metadata, architectures}
 
 data NumberedVersion = NumberedVersion
-  { metadata :: NumberedVersionMetadata,
+  { metadata :: !NumberedVersionMetadata,
     architectures :: HashMap Text ArchiveSpecification
   }
   deriving (Eq, Show)
@@ -133,20 +133,20 @@ instance FromJSON NumberedVersion where
     pure $ NumberedVersion {metadata, architectures}
 
 data MasterMetadata = MasterMetadata
-  { version :: String,
-    date :: Day,
-    docs :: Text,
-    stdDocs :: Text,
-    src :: ArchiveSpecification
+  { version :: !String,
+    date :: !Day,
+    docs :: !Text,
+    stdDocs :: !Text,
+    src :: !ArchiveSpecification
   }
   deriving (Eq, Show, Generic, FromJSON)
 
 data NumberedVersionMetadata = NumberedVersionMetadata
-  { date :: Day,
-    docs :: Text,
-    notes :: Text,
-    stdDocs :: Maybe Text,
-    src :: ArchiveSpecification
+  { date :: !Day,
+    docs :: !Text,
+    notes :: !Text,
+    stdDocs :: !(Maybe Text),
+    src :: !ArchiveSpecification
   }
   deriving (Eq, Show, Generic, FromJSON)
 
@@ -164,18 +164,6 @@ parseArchitectures = JSON.withObject "Architectures" $ \o -> do
           objectWithoutMetadata
 
   pure versions
-
-data VersionMetadata = VersionMetadata
-  { versionMetadataVersion :: Maybe Text,
-    versionMetadataDate :: Text,
-    versionMetadataDocs :: Text,
-    versionMetadataStdDocs :: Maybe Text,
-    versionMetadataSrc :: ArchiveSpecification
-  }
-  deriving (Eq, Show, Generic)
-
-instance FromJSON VersionMetadata where
-  parseJSON = JSON.genericParseJSON $ parseJSONOptions "versionMetadata"
 
 removePrefix :: String -> String -> String
 removePrefix prefix string =

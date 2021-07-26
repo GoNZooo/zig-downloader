@@ -19,6 +19,10 @@ newtype Url = Url {unUrl :: String}
   deriving stock (Eq, Show, Generic)
   deriving newtype (FromJSON)
 
+newtype ArchitectureName = ArchitectureName {unArchitectureName :: Text}
+  deriving stock (Eq, Show, Generic)
+  deriving newtype (FromJSON)
+
 -- | Command line arguments
 data Options = Options
   { optionsSettings :: !Settings,
@@ -30,7 +34,7 @@ data Options = Options
 data Command
   = ShowCommand Text
   | ListCommand
-  | DownloadCommand Text
+  | DownloadCommand Text [ArchitectureName]
   deriving (Eq, Show, Generic, FromJSON)
 
 data Settings = Settings

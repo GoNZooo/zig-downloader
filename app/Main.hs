@@ -8,6 +8,7 @@ import Network.HTTP.Client.TLS (newTlsManager)
 import Options.Applicative.Simple
 import qualified Paths_zig_downloader
 import RIO.Process
+import qualified RIO.Text as Text
 import Run
 import System.Directory
 
@@ -74,4 +75,13 @@ parseShowCommand :: Parser Command
 parseShowCommand = ShowCommand <$> argument str (metavar "VERSION")
 
 parseDownloadCommand :: Parser Command
-parseDownloadCommand = DownloadCommand <$> argument str (metavar "VERSION")
+parseDownloadCommand =
+  DownloadCommand
+    <$> argument str (metavar "VERSION")
+    <*> option
+      (maybeReader maybeReadArchitectures)
+      (long "architectures" <> short 'a' <> help "Architectures to download" <> value [])
+
+maybeReadArchitectures :: String -> Maybe [ArchitectureName]
+maybeReadArchitectures =
+  Text.pack >>> Text.split (== ',') >>> fmap ArchitectureName >>> Just

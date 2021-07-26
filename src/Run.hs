@@ -7,5 +7,5 @@ run :: Command -> RIO App ()
 run ListCommand = listVersions
 run (ShowCommand "master") = showMaster
 run (ShowCommand versionName) = showVersion versionName
-run (DownloadCommand "master") = downloadVersion "master"
-run (DownloadCommand versionName) = downloadVersion versionName
+run (DownloadCommand "master" architectures) = downloadVersion "master" architectures
+run (DownloadCommand versionName architectures) = downloadVersion versionName architectures

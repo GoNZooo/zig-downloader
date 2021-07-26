@@ -104,27 +104,40 @@ printArchitecture (name, ArchiveSpecification {size, tarball = Url tarball}) = d
           else mconcat [architecture, ": ", tarball, " (", megaBytesString, " MB)"]
   liftIO $ putStrLn outputString
 
-downloadVersion :: Text -> RIO App ()
-downloadVersion "master" = do
+downloadVersion :: Text -> [ArchitectureName] -> RIO App ()
+downloadVersion "master" wantedArchitectures = do
   downloadPath <- getDownloadPath
   maybeMaster <- getMaster
   case maybeMaster of
     Right Master {metadata = MasterMetadata {version}, architectures} -> do
-      downloadArchitectures (downloadPath </> version) architectures
+      let filteredArchitectures =
+            Map.filterWithKey
+              (\k _v -> matchingArchitectureName k wantedArchitectures)
+              architectures
+      downloadArchitectures (downloadPath </> version) filteredArchitectures
       version & Text.pack & setLatestMaster
     Left errorText ->
       logError $ "Unable to get master: " <> fromString errorText
-downloadVersion versionName = do
+downloadVersion versionName wantedArchitectures = do
   downloadPath <- getDownloadPath
   maybeVersions <- getVersions
   case maybeVersions of
     Right Versions {tags} -> do
       case Map.lookup versionName tags of
         Just NumberedVersion {architectures} -> do
-          downloadArchitectures (downloadPath </> Text.unpack versionName) architectures
+          let filteredArchitectures =
+                Map.filterWithKey
+                  (\k _v -> matchingArchitectureName k wantedArchitectures)
+                  architectures
+          downloadArchitectures (downloadPath </> Text.unpack versionName) filteredArchitectures
         Nothing -> printErrorForUnrecognizedTag tags
     Left e ->
       logError $ "Unable to get versions: " <> fromString e
+
+matchingArchitectureName :: Text -> [ArchitectureName] -> Bool
+matchingArchitectureName _architectureName [] = True
+matchingArchitectureName architectureName architectures =
+  any (`Text.isInfixOf` architectureName) (fmap unArchitectureName architectures)
 
 setLatestMaster :: Text -> RIO App ()
 setLatestMaster version = do

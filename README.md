@@ -6,6 +6,20 @@ Install with `stack install`.
 
 ## Run
 
+## Filtering architectures for download
+
+The tool obviously downloads zig versions for you. You can filter these with the `--architectures/-a`
+flag:
+
+```bash
+$ zig-downloader download 0.8.0 --architectures x86_64-linux,x86_64-windows
+Downloading: https://ziglang.org/download/0.8.0/zig-windows-x86_64-0.8.0.zip
+Downloading: https://ziglang.org/download/0.8.0/zig-linux-x86_64-0.8.0.tar.xz
+```
+
+This should make it easier to, for example, make an automatic downloader that periodically will
+download all the architectures you're interested in.
+
 ```bash
 $ zig-downloader list
 Master version: 0.8.0-dev.2684+3483931d20.8.0-dev.2684+3483931d2

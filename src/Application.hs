@@ -2,6 +2,7 @@ module Application where
 
 import Data.List.Split (splitWhen)
 import Data.Time (showGregorian)
+import Data.Time.Calendar (Day)
 import qualified HTTP
 import Import
 import Numeric (showFFloat)
@@ -56,21 +57,11 @@ showMasterData
     { metadata = MasterMetadata {version, src, date, docs, stdDocs},
       architectures
     } = do
-    quiet <- isQuietModeOn
-    if quiet
-      then do
-        output version
-      else do
-        let tarballUrl = src & tarball & unUrl
-        output version
-        output "------"
-        output $ "Version: " <> version
-        output $ "Date: " <> showGregorian date
-        output $ "Docs: " <> Text.unpack docs
-        output $ "Standard library docs: " <> Text.unpack stdDocs
-        output $ "Source: " <> tarballUrl
-        output "\nArchitectures"
-        output "-------------"
+    output version
+    outputLineIfLoud "------"
+    outputLineIfLoud $ "Version: " <> version
+    outputStandardVersionData date docs (Just stdDocs) (tarball src)
+    outputArchitectureHeader
     forM_ (Map.toList architectures) printArchitecture
 
 showVersionData :: Text -> NumberedVersion -> RIO App ()
@@ -80,18 +71,23 @@ showVersionData
     { metadata = NumberedVersionMetadata {src, date, docs, stdDocs},
       architectures
     } = do
-    quiet <- isQuietModeOn
-    unless quiet $ do
-      let tarballUrl = src & tarball & unUrl
-      output $ Text.unpack versionName
-      output "------"
-      output $ "Date: " <> showGregorian date
-      output $ "Docs: " <> Text.unpack docs
-      output $ "Standard library docs: " <> maybe "N/A" Text.unpack stdDocs
-      output $ "Source: " <> tarballUrl
-      output "\nArchitectures"
-      output "-------------"
+    outputLineIfLoud $ Text.unpack versionName
+    outputLineIfLoud "------"
+    outputStandardVersionData date docs stdDocs (tarball src)
+    outputArchitectureHeader
     forM_ (Map.toList architectures) printArchitecture
+
+outputStandardVersionData :: Day -> Text -> Maybe Text -> Url -> RIO App ()
+outputStandardVersionData date docs maybeStdDocs (Url tarball) = do
+  outputLineIfLoud $ "Date: " <> showGregorian date
+  outputLineIfLoud $ "Docs: " <> Text.unpack docs
+  outputLineIfLoud $ "Standard library docs: " <> maybe "N/A" Text.unpack maybeStdDocs
+  outputLineIfLoud $ "Source: " <> tarball
+
+outputArchitectureHeader :: RIO App ()
+outputArchitectureHeader = do
+  outputLineIfLoud "\nArchitectures"
+  outputLineIfLoud "-------------"
 
 printArchitecture :: (Text, ArchiveSpecification) -> RIO App ()
 printArchitecture (name, ArchiveSpecification {size, tarball = Url tarball}) = do

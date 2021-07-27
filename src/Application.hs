@@ -42,10 +42,10 @@ listVersions = do
       do
         let tagKeys = tags & Map.keys & List.sortBy descending
 
-        loudOutput $ "Master version: " <> version
+        outputIfLoud $ "Master version: " <> version
         output version
 
-        loudOutputLine "Other versions:"
+        outputLineIfLoud "Other versions:"
         liftIO $ forM_ tagKeys (Text.unpack >>> putStrLn)
     Left e ->
       logError $ "Unable to fetch versions: " <> fromString e
@@ -56,7 +56,7 @@ showMasterData
     { metadata = MasterMetadata {version, src, date, docs, stdDocs},
       architectures
     } = do
-    quiet <- quietModeOn
+    quiet <- isQuietModeOn
     if quiet
       then do
         output version
@@ -80,7 +80,7 @@ showVersionData
     { metadata = NumberedVersionMetadata {src, date, docs, stdDocs},
       architectures
     } = do
-    quiet <- quietModeOn
+    quiet <- isQuietModeOn
     unless quiet $ do
       let tarballUrl = src & tarball & unUrl
       output $ Text.unpack versionName
@@ -95,7 +95,7 @@ showVersionData
 
 printArchitecture :: (Text, ArchiveSpecification) -> RIO App ()
 printArchitecture (name, ArchiveSpecification {size, tarball = Url tarball}) = do
-  quiet <- quietModeOn
+  quiet <- isQuietModeOn
   let megaBytesString = showFFloat (Just 2) (fromIntegral size / (1000000.0 :: Float)) ""
       architecture = Text.unpack name
       outputString =
@@ -163,7 +163,7 @@ downloadTarball (Url url) path = do
   alreadyHasTarball <- liftIO $ Directory.doesFileExist path
   if alreadyHasTarball
     then
-      loudOutputLine $
+      outputLineIfLoud $
         mconcat
           [ "Not downloading '",
             url,
@@ -179,17 +179,17 @@ printErrorForUnrecognizedTag tags = do
   output "Unable to find version, available versions are:"
   liftIO $ forM_ tagNames (Text.unpack >>> putStrLn)
 
-quietModeOn :: RIO App Bool
-quietModeOn = do
+isQuietModeOn :: RIO App Bool
+isQuietModeOn = do
   asks $ appOptions >>> optionsQuiet
 
-loudOutput :: String -> RIO App ()
-loudOutput text = do
-  unlessM quietModeOn $ do
+outputIfLoud :: String -> RIO App ()
+outputIfLoud text = do
+  unlessM isQuietModeOn $ do
     liftIO $ putStr text
 
-loudOutputLine :: String -> RIO App ()
-loudOutputLine = (<> "\n") >>> loudOutput
+outputLineIfLoud :: String -> RIO App ()
+outputLineIfLoud = (<> "\n") >>> outputIfLoud
 
 output :: (MonadIO m) => String -> m ()
 output = putStrLn >>> liftIO

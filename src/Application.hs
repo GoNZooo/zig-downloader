@@ -106,11 +106,18 @@ downloadVersion "master" wantedArchitectures = do
   maybeMaster <- getMaster
   case maybeMaster of
     Right Master {metadata = MasterMetadata {version}, architectures} -> do
-      let filteredArchitectures =
-            Map.filterWithKey
-              (\k _v -> matchingArchitectureName k wantedArchitectures)
-              architectures
+      let filteredArchitectures = existentArchitectures & fmap snd & mconcat
+          (existentArchitectures, nonExistentArchitectures) =
+            wantedArchitectures
+              & fmap
+                ( \(ArchitectureName n) ->
+                    (n, Map.filterWithKey (\k _v -> k == n) architectures)
+                )
+              & List.partition (snd >>> Map.null >>> not)
+          nonExistentNames = fmap fst nonExistentArchitectures
+          availableArchitectures = Map.keys architectures
       downloadArchitectures (downloadPath </> version) filteredArchitectures
+      warnAboutNonExistentArchitectures nonExistentNames availableArchitectures
       version & Text.pack & setLatestMaster
     Left errorText ->
       logError $ "Unable to get master: " <> fromString errorText
@@ -121,14 +128,32 @@ downloadVersion versionName wantedArchitectures = do
     Right Versions {tags} -> do
       case Map.lookup versionName tags of
         Just NumberedVersion {architectures} -> do
-          let filteredArchitectures =
-                Map.filterWithKey
-                  (\k _v -> matchingArchitectureName k wantedArchitectures)
-                  architectures
+          let filteredArchitectures = existentArchitectures & fmap snd & mconcat
+              (existentArchitectures, nonExistentArchitectures) =
+                wantedArchitectures
+                  & fmap
+                    ( \(ArchitectureName n) ->
+                        (n, Map.filterWithKey (\k _v -> k == n) architectures)
+                    )
+                  & List.partition (snd >>> Map.null >>> not)
+              nonExistentNames = fmap fst nonExistentArchitectures
+              availableArchitectures = Map.keys architectures
           downloadArchitectures (downloadPath </> Text.unpack versionName) filteredArchitectures
+          warnAboutNonExistentArchitectures nonExistentNames availableArchitectures
         Nothing -> printErrorForUnrecognizedTag tags
     Left e ->
       logError $ "Unable to get versions: " <> fromString e
+
+warnAboutNonExistentArchitectures :: [Text] -> [Text] -> RIO App ()
+warnAboutNonExistentArchitectures [] _availableArchitectures =
+  -- No warnings, do nothing
+  mempty
+warnAboutNonExistentArchitectures nonExistentArchitectures availableArchitectures = do
+  let warnings =
+        fmap (\a -> "Warning: Unable to find matches for '" <> a <> "'") nonExistentArchitectures
+      availableArchitecturesString = Text.unpack $ Text.intercalate ", " availableArchitectures
+  mapM_ (Text.unpack >>> output) warnings
+  output $ "Available architectures: " <> availableArchitecturesString
 
 matchingArchitectureName :: Text -> [ArchitectureName] -> Bool
 matchingArchitectureName _architectureName [] = True

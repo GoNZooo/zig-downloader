@@ -23,6 +23,11 @@ newtype ArchitectureName = ArchitectureName {unArchitectureName :: Text}
   deriving stock (Eq, Show, Generic)
   deriving newtype (FromJSON)
 
+newtype YamlFileDecodingError = YamlFileDecodingError {unYamlFileDecodingError :: String}
+  deriving (Eq, Show)
+
+instance Exception YamlFileDecodingError
+
 -- | Command line arguments
 data Options = Options
   { optionsSettings :: !Settings,

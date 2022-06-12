@@ -17,8 +17,8 @@ main = do
   yamlConfigurationPath <- getXdgDirectory XdgConfig "zig-downloader/config.yaml"
   maybeYamlOptions <- decodeFileEither yamlConfigurationPath
   let defaultDownloadPath = case maybeYamlOptions of
-        Right Settings {settingsDownloadPath = path} -> path
-        Left errorString -> impureThrow errorString
+        Right settings -> settings ^. settingsDownloadPath
+        Left errorString -> throwM $ YamlFileDecodingError errorString
       listCommand = command "list" $ info (pure ListCommand) (progDesc "List all versions")
       downloadCommand =
         command "download" (info parseDownloadCommand (progDesc "Download a given version"))

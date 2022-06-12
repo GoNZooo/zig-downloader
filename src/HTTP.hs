@@ -18,7 +18,7 @@ downloadBinaryFile url path = do
 
 downloadData :: Url -> RIO App LazyByteString.ByteString
 downloadData (Url url) = do
-  manager <- asks appTlsManager
+  manager <- view appTlsManager
   request <- liftIO $ parseRequest url
   response <- liftIO $ httpLbs request manager
   pure $ responseBody response

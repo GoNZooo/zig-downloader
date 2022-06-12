@@ -37,18 +37,18 @@ main = do
           <*> switch (long "quiet" <> short 'q' <> help "Whether to print less output or not")
       )
       empty
-  lo <- logOptionsHandle stderr $ options & optionsSettings & settingsVerbose
+  lo <- logOptionsHandle stderr $ options ^. optionsSettings . settingsVerbose
   pc <- mkDefaultProcessContext
-  appTlsManager <- newTlsManager
+  tlsManager <- newTlsManager
   withLogFunc lo $ \lf ->
     let app =
           App
-            { appLogFunc = lf,
-              appProcessContext = pc,
-              appOptions = options,
-              appTlsManager
+            { _appLogFunc = lf,
+              _appProcessContext = pc,
+              _appOptions = options,
+              _appTlsManager = tlsManager
             }
-     in runRIO app $ run $ optionsCommand options
+     in runRIO app $ run $ options ^. optionsCommand
 
 parseSettings :: FilePath -> Parser Settings
 parseSettings defaultDownloadPath =

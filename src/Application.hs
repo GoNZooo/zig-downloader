@@ -4,8 +4,8 @@ import Data.List.Split (splitWhen)
 import Data.Time (showGregorian)
 import Data.Time.Calendar (Day)
 import qualified HTTP
-import Import
 import Numeric (showFFloat)
+import Qtility
 import qualified RIO.Directory as Directory
 import qualified RIO.HashMap as Map
 import qualified RIO.List as List
@@ -13,6 +13,7 @@ import qualified RIO.List.Partial as Partial
 import qualified RIO.Text as Text
 import System.FilePath ((</>))
 import System.IO (putStr, putStrLn)
+import Types
 import Utilities (createIfNotExists, descending)
 import ZigIndex (getMaster, getVersions)
 
@@ -60,7 +61,7 @@ showMasterData
     output version
     outputLineIfLoud "------"
     outputLineIfLoud $ "Version: " <> version
-    outputStandardVersionData date docs (Just stdDocs) (tarball src)
+    outputStandardVersionData date docs (Just stdDocs) (src ^. archiveSpecificationTarball)
     outputArchitectureHeader
     forM_ (Map.toList architectures) printArchitecture
 
@@ -73,7 +74,7 @@ showVersionData
     } = do
     outputLineIfLoud $ Text.unpack versionName
     outputLineIfLoud "------"
-    outputStandardVersionData date docs stdDocs (tarball src)
+    outputStandardVersionData date docs stdDocs (src ^. archiveSpecificationTarball)
     outputArchitectureHeader
     forM_ (Map.toList architectures) printArchitecture
 
@@ -90,10 +91,12 @@ outputArchitectureHeader = do
   outputLineIfLoud "-------------"
 
 printArchitecture :: (Text, ArchiveSpecification) -> RIO App ()
-printArchitecture (name, ArchiveSpecification {size, tarball = Url tarball}) = do
+printArchitecture (name, spec) = do
   quiet <- isQuietModeOn
   let megaBytesString = showFFloat (Just 2) (fromIntegral size / (1000000.0 :: Float)) ""
       architecture = Text.unpack name
+      size = spec ^. archiveSpecificationSize
+      tarball = spec ^. archiveSpecificationTarball . unwrap
       outputString =
         if quiet
           then tarball
@@ -169,8 +172,9 @@ downloadArchitectures :: FilePath -> HashMap Text ArchiveSpecification -> RIO Ap
 downloadArchitectures path = Map.toList >>> traverse_ (downloadArchitecture path)
 
 downloadArchitecture :: FilePath -> (Text, ArchiveSpecification) -> RIO App ()
-downloadArchitecture versionPath (architectureName, ArchiveSpecification {tarball}) = do
+downloadArchitecture versionPath (architectureName, spec) = do
   let architecturePath = versionPath </> Text.unpack architectureName
+      tarball = spec ^. archiveSpecificationTarball
       tarballUrlPaths = tarball & unUrl & splitWhen (== '/')
       tarballFilename = case tarballUrlPaths of
         [] -> error "Tarball URL is blank"
@@ -201,8 +205,7 @@ printErrorForUnrecognizedTag tags = do
   liftIO $ forM_ tagNames (Text.unpack >>> putStrLn)
 
 isQuietModeOn :: RIO App Bool
-isQuietModeOn = do
-  asks $ appOptions >>> optionsQuiet
+isQuietModeOn = view $ appOptions . optionsQuiet
 
 outputIfLoud :: String -> RIO App ()
 outputIfLoud text = do
@@ -216,5 +219,4 @@ output :: (MonadIO m) => String -> m ()
 output = putStrLn >>> liftIO
 
 getDownloadPath :: RIO App FilePath
-getDownloadPath = do
-  asks $ appOptions >>> optionsSettings >>> settingsDownloadPath
+getDownloadPath = view $ appOptions . optionsSettings . settingsDownloadPath

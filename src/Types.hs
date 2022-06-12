@@ -1,13 +1,13 @@
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Types where
 
-import Data.Aeson (FromJSON (..), (.:))
 import qualified Data.Aeson as JSON
 import Data.Aeson.Types (Parser)
 import Data.Time.Calendar (Day)
 import Network.HTTP.Client
-import RIO
+import Qtility
 import qualified RIO.HashMap as Map
 import RIO.Process
 import qualified RIO.Text as Text
@@ -21,7 +21,6 @@ newtype Url = Url {unUrl :: String}
 
 newtype ArchitectureName = ArchitectureName {unArchitectureName :: Text}
   deriving stock (Eq, Show, Generic)
-  deriving newtype (FromJSON)
 
 newtype YamlFileDecodingError = YamlFileDecodingError {unYamlFileDecodingError :: String}
   deriving (Eq, Show)
@@ -30,9 +29,9 @@ instance Exception YamlFileDecodingError
 
 -- | Command line arguments
 data Options = Options
-  { optionsSettings :: !Settings,
-    optionsCommand :: !Command,
-    optionsQuiet :: !Bool
+  { _optionsSettings :: !Settings,
+    _optionsCommand :: !Command,
+    _optionsQuiet :: !Bool
   }
   deriving (Eq, Show, Generic)
 
@@ -40,44 +39,26 @@ data Command
   = ShowCommand Text
   | ListCommand
   | DownloadCommand Text [ArchitectureName]
-  deriving (Eq, Show, Generic, FromJSON)
+  deriving (Eq, Show, Generic)
 
 data Settings = Settings
-  { settingsVerbose :: !Bool,
-    settingsDownloadPath :: !FilePath,
-    settingsDownloadMaster :: !Bool
+  { _settingsVerbose :: !Bool,
+    _settingsDownloadPath :: !FilePath,
+    _settingsDownloadMaster :: !Bool
   }
   deriving (Eq, Show, Generic)
 
-parseJSONOptions :: String -> JSON.Options
-parseJSONOptions prefix =
-  let fieldLabelModifier = removePrefix prefix
-   in JSON.defaultOptions {JSON.fieldLabelModifier}
-
-instance FromJSON Options where
-  parseJSON = JSON.genericParseJSON $ parseJSONOptions "options"
-
-instance FromJSON Settings where
-  parseJSON = JSON.genericParseJSON $ parseJSONOptions "settings"
-
 data App = App
-  { appLogFunc :: !LogFunc,
-    appProcessContext :: !ProcessContext,
-    appOptions :: !Options,
-    appTlsManager :: !Manager
-    -- Add other app-specific configuration information here
+  { _appLogFunc :: !LogFunc,
+    _appProcessContext :: !ProcessContext,
+    _appOptions :: !Options,
+    _appTlsManager :: !Manager
   }
 
-instance HasLogFunc App where
-  logFuncL = lens appLogFunc (\x y -> x {appLogFunc = y})
-
-instance HasProcessContext App where
-  processContextL = lens appProcessContext (\x y -> x {appProcessContext = y})
-
 data ArchiveSpecification = ArchiveSpecification
-  { tarball :: !Url,
-    shasum :: !Text,
-    size :: !Int
+  { _archiveSpecificationTarball :: !Url,
+    _archiveSpecificationShasum :: !Text,
+    _archiveSpecificationSize :: !Int
   }
   deriving (Eq, Show)
 
@@ -87,7 +68,13 @@ instance FromJSON ArchiveSpecification where
     shasum <- o .: "shasum"
     maybeSize <- readMaybe <$> o .: "size"
     case maybeSize of
-      Just size -> pure $ ArchiveSpecification {tarball, shasum, size}
+      Just size ->
+        pure $
+          ArchiveSpecification
+            { _archiveSpecificationTarball = tarball,
+              _archiveSpecificationShasum = shasum,
+              _archiveSpecificationSize = size
+            }
       Nothing ->
         fail "Size is not readable as integer"
 
@@ -183,3 +170,17 @@ removePrefix prefix string =
             Left err -> throwM err
         [rest] -> Text.unpack rest
         _otherwise -> error "Invalid prefix used"
+
+foldMapM deriveJSON [''ArchitectureName, ''Command]
+
+foldMapM deriveLensAndJSON [''Options, ''Settings]
+
+foldMapM makeLenses [''App, ''ArchiveSpecification]
+
+foldMapM makeWrapped [''Url]
+
+instance HasLogFunc App where
+  logFuncL = appLogFunc
+
+instance HasProcessContext App where
+  processContextL = appProcessContext

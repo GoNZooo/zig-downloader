@@ -1,6 +1,16 @@
-resolver: lts-16.31
+resolver: lts-18.14
 
 packages:
 - .
 
-allow-different-user: true
+extra-deps:
+- github: quanterall/qtility
+  commit: ad84c86f7c8d2f8f1d53908a906f9bdb3708c36c
+  subdirs:
+  - qtility
+  # nix-sha256: sha256-SiLIXJCRgtOYiR7GObKgBJr6MzWrpkx4Jg6NNPrjYUI=
+
+nix:
+  enable: false
+  packages:
+  - zlib

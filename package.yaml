@@ -29,6 +29,7 @@ dependencies:
 - filepath
 - split
 - time
+- qtility
 
 ghc-options:
 - -Wall

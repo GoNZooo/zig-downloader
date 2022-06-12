@@ -3,10 +3,23 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    size: 59767
+    subdir: qtility
+    url: https://github.com/quanterall/qtility/archive/ad84c86f7c8d2f8f1d53908a906f9bdb3708c36c.tar.gz
+    name: qtility
+    version: 1.2.0
+    sha256: 6559eab8b3df05bf399be1227f7c93ff7e43703552c6cdb6aee377e9d8900465
+    pantry-tree:
+      size: 1598
+      sha256: 24e4765e23e667faaf161c31beaa655421c940ea698cbfd9cfe1a22f83335d8c
+  original:
+    subdir: qtility
+    url: https://github.com/quanterall/qtility/archive/ad84c86f7c8d2f8f1d53908a906f9bdb3708c36c.tar.gz
 snapshots:
 - completed:
-    size: 534126
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/31.yaml
-    sha256: 637fb77049b25560622a224845b7acfe81a09fdb6a96a3c75997a10b651667f6
-  original: lts-16.31
+    size: 586069
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/14.yaml
+    sha256: 87842ecbaa8ca9cee59a7e6be52369dbed82ed075cb4e0d152614a627e8fd488
+  original: lts-18.14

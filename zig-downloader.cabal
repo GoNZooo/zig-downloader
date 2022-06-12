@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4625a277f3bab2a66baa5e654a8b1eee9cee7ad56f895966860773b74dd94637
+-- hash: 13044ed4bc779a36aa7ac144962f8ea7fcd473261fcf310c25d5f9a252008cab
 
 name:           zig-downloader
 version:        0.1.0.0
@@ -90,6 +90,7 @@ library
     , http-client
     , http-client-tls
     , inflections
+    , qtility
     , rio >=0.1.12.0
     , split
     , time
@@ -155,6 +156,7 @@ executable zig-downloader
     , http-client-tls
     , inflections
     , optparse-simple
+    , qtility
     , rio >=0.1.12.0
     , split
     , time
@@ -223,6 +225,7 @@ test-suite zig-downloader-test
     , http-client
     , http-client-tls
     , inflections
+    , qtility
     , rio >=0.1.12.0
     , split
     , time
